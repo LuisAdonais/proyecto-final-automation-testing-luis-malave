@@ -62,3 +62,22 @@ def test_tc_api_01_get_usuario_existente(session):
     assert body["data"]["id"] == 2
     assert "email" in body["data"]
     assert "first_name" in body["data"]
+
+
+# --- TC_API_02 - Crear usuario (POST) --- #
+def test_tc_api_02_post_crear_usuario(session):
+    headers = _headers_reqres()
+    _skip_si_no_hay_key(headers)
+
+    url = f"{BASE_URL}/users"
+    payload = {"name": "luis", "job": "qa automation"}
+
+    respuesta = session.post(url, headers=headers, json=payload, timeout=15)
+
+    assert respuesta.status_code == 201
+
+    body = respuesta.json()
+    assert body["name"] == "luis"
+    assert body["job"] == "qa automation"
+    assert "id" in body
+    assert "createdAt" in body
