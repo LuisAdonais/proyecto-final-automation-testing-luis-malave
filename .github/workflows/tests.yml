@@ -1,0 +1,58 @@
+# Pipeline de GitHub Actions
+# La API key de ReqRes NO va aqui: se configura en GitHub Secrets.
+
+name: Ejecutar pruebas automatizadas
+
+on:
+  push:
+    branches: [main, feature/project-structure]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-tests:
+    name: Pruebas API (ReqRes)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ejecutar pruebas API
+        env:
+          REQRES_API_KEY: ${{ secrets.REQRES_API_KEY }}
+        run: pytest tests/api -v
+
+  ui-tests:
+    name: Pruebas UI (SauceDemo)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar Firefox
+        uses: browser-actions/setup-firefox@v1
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ejecutar pruebas UI
+        run: pytest tests/ui -v

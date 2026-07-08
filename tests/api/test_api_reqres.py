@@ -4,14 +4,19 @@
 # Todas las requests requieren el header x-api-key.
 
 import os
+from pathlib import Path
 
 import pytest
 import requests
+from dotenv import load_dotenv
+
+# Carga variables desde .env local (archivo ignorado por git)
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 # Base URL pedida por el ticket
 BASE_URL = "https://reqres.in/api"
 
-# Leemos la API key desde variable de entorno (NO hardcodear en GitHub)
+# Leemos la API key desde entorno o .env (NO hardcodear en GitHub)
 API_KEY = os.getenv("REQRES_API_KEY")
 
 # Headers comunes para ReqRes
@@ -25,8 +30,9 @@ HEADERS = {
 def validar_api_key_configurada():
     """
     Control temprano: si falta la key, el error es claro para un junior.
-  No subas la key al repo; configurala en PowerShell:
-    $env:REQRES_API_KEY="tu_api_key_aqui"
+    Opciones seguras:
+    - Crear archivo .env (copiar desde .env.example)
+    - O en PowerShell: $env:REQRES_API_KEY="tu_api_key_aqui"
     """
     if API_KEY is None:
         raise ValueError("Falta configurar la variable de entorno REQRES_API_KEY")
