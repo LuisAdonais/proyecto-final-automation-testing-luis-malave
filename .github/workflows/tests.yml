@@ -1,27 +1,30 @@
-# Pipeline de GitHub Actions
-# La API key de ReqRes NO va aqui: se configura en GitHub Secrets.
+# GitHub Actions — ejecuta la suite completa en cada push/PR a main.
+# La API key de ReqRes se configura en GitHub Secrets (REQRES_API_KEY).
 
-name: Ejecutar pruebas automatizadas
+name: Automation Testing CI
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  api-tests:
-    name: Pruebas API (ReqRes)
+  tests:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout del repositorio
+      - name: Checkout codigo
         uses: actions/checkout@v4
 
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
+
+      - name: Instalar Firefox
+        uses: browser-actions/setup-firefox@v1
 
       - name: Instalar dependencias
         run: |
@@ -35,33 +38,17 @@ jobs:
             exit 1
           fi
 
-      - name: Ejecutar pruebas API
+      - name: Ejecutar pruebas
         env:
           REQRES_API_KEY: ${{ secrets.REQRES_API_KEY }}
-        run: pytest tests/api -v
-
-  ui-tests:
-    name: Pruebas UI (SauceDemo)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v4
-
-      - name: Configurar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Instalar Firefox
-        uses: browser-actions/setup-firefox@v1
-
-      - name: Instalar dependencias
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Ejecutar pruebas UI
-        env:
           GITHUB_ACTIONS: "true"
-        run: pytest tests/ui -v
+        run: pytest
+
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-automation-testing
+          path: |
+            reports/
+            screenshots/
