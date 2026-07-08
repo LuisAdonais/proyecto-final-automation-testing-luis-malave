@@ -142,3 +142,21 @@ def test_tc_ui_06_checkout_completo_exitoso(driver):
     checkout.finalizar_compra()
 
     assert "Thank you for your order!" in checkout.obtener_mensaje_confirmacion()
+
+
+# --- TC_UI_07: Checkout negativo sin datos obligatorios ---
+def test_tc_ui_07_checkout_sin_datos_obligatorios(driver):
+    """Valida error al continuar checkout sin completar el formulario."""
+    inventario = InventoryPage(driver)
+    carrito = CartPage(driver)
+    checkout = CheckoutPage(driver)
+
+    _login_exitoso(driver)
+    inventario.agregar_producto_al_carrito(PRODUCTO_BACKPACK_ID)
+    inventario.ir_al_carrito()
+    carrito.click_checkout()
+
+    checkout.continuar()
+
+    mensaje_error = checkout.obtener_mensaje_error()
+    assert "First Name is required" in mensaje_error

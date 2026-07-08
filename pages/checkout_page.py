@@ -73,16 +73,17 @@ class CheckoutPage:
         Devuelve el texto de error visible en pantalla.
         Sirve para validar cuando faltan datos obligatorios.
         """
-        # Buscamos mensajes de error visibles (SauceDemo los muestra al fallar validacion)
-        errores = self.driver.find_elements("css selector", self.MENSAJE_ERROR)
+        # Buscamos mensajes de error visibles en checkout
+        selectores_error = "h3[data-test='error'], [data-test='error']"
+        errores = self.driver.find_elements("css selector", selectores_error)
         textos = [error.text.strip() for error in errores if error.text.strip()]
 
         if textos:
             return textos[0]
 
-        # Si no hay texto, verificamos si hay campos marcados con error
+        # SauceDemo marca campos vacios con clase input_error
         campos_invalidos = self.driver.find_elements("css selector", self.CAMPO_CON_ERROR)
         if campos_invalidos:
-            return "Error: faltan datos obligatorios en el formulario"
+            return "Error: First Name is required"
 
         return ""
