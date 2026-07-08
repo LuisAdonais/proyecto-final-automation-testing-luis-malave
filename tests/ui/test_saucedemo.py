@@ -1,6 +1,6 @@
 # tests/ui/test_saucedemo.py
-# Pruebas UI de SauceDemo usando Page Object Model.
-# Regla importante: los tests NO usan localizadores Selenium directos.
+# Pruebas UI de SauceDemo con Page Object Model.
+# Los tests solo orquestan acciones; la logica Selenium vive en pages/.
 
 import pytest
 
@@ -10,34 +10,35 @@ from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
 from utils.helpers import cargar_json
 
-# Marker del epic: todas las pruebas de este archivo son UI
 pytestmark = pytest.mark.ui
 
-# --- Constantes y datos externos ---
 DATOS_LOGIN = cargar_json("usuarios.json")
 USUARIO_VALIDO = "standard_user"
 PASSWORD_VALIDA = "secret_sauce"
+PRODUCTO_BACKPACK_ID = "sauce-labs-backpack"
+PRODUCTO_BACKPACK_NOMBRE = "Sauce Labs Backpack"
+DATOS_CHECKOUT = cargar_json("checkout_data.json")
 
 
 def _login_exitoso(driver):
-    """Abre SauceDemo y hace login valido (helper interno)."""
+    """Helper interno: abre SauceDemo e inicia sesion valida."""
     login = LoginPage(driver)
     login.abrir()
     login.login(USUARIO_VALIDO, PASSWORD_VALIDA)
-    return login
 
 
-# --- TC_UI_01: Login parametrizado positivo y negativo ---
+def _precio_a_numero(texto_precio):
+    """Convierte '$29.99' a 29.99 para comparar orden de precios."""
+    return float(texto_precio.replace("$", ""))
+
+
 @pytest.mark.parametrize(
     "dato",
     DATOS_LOGIN,
     ids=[f"{item['usuario']}_{item['resultado_esperado']}" for item in DATOS_LOGIN],
 )
 def test_tc_ui_01_login_parametrizado(driver, dato):
-    """
-    Valida login exitoso, usuario bloqueado y credenciales invalidas.
-    Los datos vienen de data/usuarios.json (datos externos).
-    """
+    """Login positivo y negativo con datos de usuarios.json."""
     login = LoginPage(driver)
     inventario = InventoryPage(driver)
 
@@ -53,9 +54,8 @@ def test_tc_ui_01_login_parametrizado(driver, dato):
         assert dato["mensaje_esperado"].lower() in mensaje.lower()
 
 
-# --- TC_UI_02: Navegacion al catalogo ---
 def test_tc_ui_02_navegacion_al_catalogo(driver):
-    """Valida que despues del login llegamos al catalogo de productos."""
+    """Tras login valido, el usuario llega al catalogo de productos."""
     inventario = InventoryPage(driver)
 
     _login_exitoso(driver)
@@ -65,17 +65,8 @@ def test_tc_ui_02_navegacion_al_catalogo(driver):
     assert len(inventario.obtener_nombres_productos()) > 0
 
 
-def _precio_a_numero(texto_precio):
-    """Convierte '$29.99' a 29.99 para comparar orden de precios."""
-    return float(texto_precio.replace("$", ""))
-
-
-# --- TC_UI_03: Busqueda funcional por filtro de catalogo ---
 def test_tc_ui_03_filtrar_productos_por_precio(driver):
-    """
-    En SauceDemo no hay barra de busqueda textual.
-    Cubrimos busqueda funcional ordenando por precio (low to high).
-    """
+    """Ordena el catalogo por precio ascendente y valida el resultado."""
     inventario = InventoryPage(driver)
 
     _login_exitoso(driver)
@@ -85,13 +76,8 @@ def test_tc_ui_03_filtrar_productos_por_precio(driver):
     assert precios == sorted(precios)
 
 
-PRODUCTO_BACKPACK_ID = "sauce-labs-backpack"
-PRODUCTO_BACKPACK_NOMBRE = "Sauce Labs Backpack"
-
-
-# --- TC_UI_04: Anadir producto al carrito ---
 def test_tc_ui_04_agregar_producto_al_carrito(driver):
-    """Valida agregar un producto y verlo en el carrito."""
+    """Agrega un producto y lo verifica en el carrito."""
     inventario = InventoryPage(driver)
     carrito = CartPage(driver)
 
@@ -105,12 +91,8 @@ def test_tc_ui_04_agregar_producto_al_carrito(driver):
     assert PRODUCTO_BACKPACK_NOMBRE in carrito.obtener_productos_en_carrito()
 
 
-# --- TC_UI_05: Remover producto del carrito ---
 def test_tc_ui_05_remover_producto_del_carrito(driver):
-    """
-    Test independiente: prepara su propio carrito y luego lo vacia.
-    No depende de otros tests.
-    """
+    """Prepara su propio carrito y valida que quede vacio al remover."""
     inventario = InventoryPage(driver)
     carrito = CartPage(driver)
 
@@ -124,12 +106,8 @@ def test_tc_ui_05_remover_producto_del_carrito(driver):
     assert carrito.obtener_productos_en_carrito() == []
 
 
-DATOS_CHECKOUT = cargar_json("checkout_data.json")
-
-
-# --- TC_UI_06: Checkout completo exitoso ---
 def test_tc_ui_06_checkout_completo_exitoso(driver):
-    """Flujo E2E: login -> carrito -> checkout -> confirmacion."""
+    """Flujo E2E: login, carrito, checkout y confirmacion."""
     inventario = InventoryPage(driver)
     carrito = CartPage(driver)
     checkout = CheckoutPage(driver)
@@ -147,9 +125,8 @@ def test_tc_ui_06_checkout_completo_exitoso(driver):
     assert "Thank you for your order!" in checkout.obtener_mensaje_confirmacion()
 
 
-# --- TC_UI_07: Checkout negativo sin datos obligatorios ---
 def test_tc_ui_07_checkout_sin_datos_obligatorios(driver):
-    """Valida error al continuar checkout sin completar el formulario."""
+    """Muestra error al continuar checkout sin completar el formulario."""
     inventario = InventoryPage(driver)
     carrito = CartPage(driver)
     checkout = CheckoutPage(driver)
