@@ -1,0 +1,20 @@
+[
+  {
+    "usuario": "standard_user",
+    "password": "secret_sauce",
+    "resultado_esperado": "ok",
+    "mensaje_esperado": ""
+  },
+  {
+    "usuario": "locked_out_user",
+    "password": "secret_sauce",
+    "resultado_esperado": "bloqueado",
+    "mensaje_esperado": "locked out"
+  },
+  {
+    "usuario": "standard_user",
+    "password": "password_mala",
+    "resultado_esperado": "error",
+    "mensaje_esperado": "Username and password do not match"
+  }
+]
