@@ -1,7 +1,7 @@
 # tests/api/test_api_reqres.py
 # Pruebas de API usando Requests contra ReqRes.
-# Importante (junior): ReqRes ahora pide API Key (header x-api-key).
-# Guardamos la key como variable de entorno para NO subirla al repo.
+# Documentacion oficial: https://reqres.in/docs
+# Todas las requests requieren el header x-api-key.
 
 import os
 
@@ -11,103 +11,80 @@ import requests
 # Base URL pedida por el ticket
 BASE_URL = "https://reqres.in/api"
 
+# Leemos la API key desde variable de entorno (NO hardcodear en GitHub)
+API_KEY = os.getenv("REQRES_API_KEY")
 
-def _obtener_api_key():
-    """
-    Lee la API key desde variable de entorno.
-    Si no existe, devolvemos None y los tests se van a saltar (skip).
-    """
-    return os.getenv("REQRES_API_KEY")
+# Headers comunes para ReqRes
+HEADERS = {
+    "x-api-key": API_KEY,
+    "Content-Type": "application/json",
+}
 
 
-def _headers_reqres():
+@pytest.fixture(autouse=True)
+def validar_api_key_configurada():
     """
-    Arma los headers que necesita ReqRes.
+    Control temprano: si falta la key, el error es claro para un junior.
+  No subas la key al repo; configurala en PowerShell:
+    $env:REQRES_API_KEY="tu_api_key_aqui"
     """
-    api_key = _obtener_api_key()
-    if not api_key:
-        return None
-    return {"x-api-key": api_key}
+    if API_KEY is None:
+        raise ValueError("Falta configurar la variable de entorno REQRES_API_KEY")
 
 
 @pytest.fixture
 def session():
-    """
-    Reutilizamos una Session de requests (mejor performance y menos repetición).
-    """
+    """Reutilizamos una Session de requests en todos los tests API."""
     return requests.Session()
-
-
-def _skip_si_no_hay_key(headers):
-    """
-    ReqRes exige x-api-key.
-    Si el usuario no configuró REQRES_API_KEY, saltamos el test con un mensaje claro.
-    """
-    if headers is None:
-        pytest.skip("Falta REQRES_API_KEY (variable de entorno) para llamar a ReqRes.")
 
 
 # --- TC_API_01 - Obtener usuario existente --- #
 def test_tc_api_01_get_usuario_existente(session):
-    headers = _headers_reqres()
-    _skip_si_no_hay_key(headers)
-
-    url = f"{BASE_URL}/users/2"
-    respuesta = session.get(url, headers=headers, timeout=15)
+    respuesta = session.get(f"{BASE_URL}/users/2", headers=HEADERS, timeout=15)
 
     assert respuesta.status_code == 200
 
-    body = respuesta.json()
-    assert "data" in body
-    assert body["data"]["id"] == 2
-    assert "email" in body["data"]
-    assert "first_name" in body["data"]
+    data = respuesta.json()
+    assert "data" in data
+    assert data["data"]["id"] == 2
+    assert "email" in data["data"]
+    assert "first_name" in data["data"]
 
 
 # --- TC_API_02 - Crear usuario (POST) --- #
 def test_tc_api_02_post_crear_usuario(session):
-    headers = _headers_reqres()
-    _skip_si_no_hay_key(headers)
-
-    url = f"{BASE_URL}/users"
     payload = {"name": "luis", "job": "qa automation"}
 
-    respuesta = session.post(url, headers=headers, json=payload, timeout=15)
+    respuesta = session.post(
+        f"{BASE_URL}/users",
+        json=payload,
+        headers=HEADERS,
+        timeout=15,
+    )
 
     assert respuesta.status_code == 201
 
-    body = respuesta.json()
-    assert body["name"] == "luis"
-    assert body["job"] == "qa automation"
-    assert "id" in body
-    assert "createdAt" in body
+    data = respuesta.json()
+    assert data["name"] == "luis"
+    assert data["job"] == "qa automation"
+    assert "id" in data
+    assert "createdAt" in data
 
 
 # --- TC_API_03 - Eliminar usuario (DELETE) --- #
 def test_tc_api_03_delete_usuario(session):
-    headers = _headers_reqres()
-    _skip_si_no_hay_key(headers)
-
-    url = f"{BASE_URL}/users/2"
-    respuesta = session.delete(url, headers=headers, timeout=15)
+    respuesta = session.delete(f"{BASE_URL}/users/2", headers=HEADERS, timeout=15)
 
     assert respuesta.status_code == 204
-
-    # 204 = No Content: normalmente viene body vacío.
     assert respuesta.text == ""
 
 
 # --- TC_API_04 - Usuario no encontrado (negativo) --- #
 def test_tc_api_04_get_usuario_no_encontrado(session):
-    headers = _headers_reqres()
-    _skip_si_no_hay_key(headers)
-
-    url = f"{BASE_URL}/users/23"
-    respuesta = session.get(url, headers=headers, timeout=15)
+    respuesta = session.get(f"{BASE_URL}/users/23", headers=HEADERS, timeout=15)
 
     assert respuesta.status_code == 404
 
-    # ReqRes suele responder {} sin campo data cuando no existe
     body = respuesta.json()
     assert body == {} or "data" not in body
 
@@ -117,21 +94,20 @@ def test_tc_api_05_encadenamiento_crear_usuario_y_validar_id(session):
     """
     Importante (junior):
     ReqRes NO persiste realmente los usuarios creados.
-    Este encadenamiento es demostrativo: validamos que viene un 'id' y lo usamos
-    como dato dentro del mismo test.
+    Este encadenamiento es demostrativo: validamos que viene un 'id'
+    y lo usamos como dato dentro del mismo test.
     """
-    headers = _headers_reqres()
-    _skip_si_no_hay_key(headers)
-
-    url = f"{BASE_URL}/users"
     payload = {"name": "luis", "job": "qa automation"}
 
-    respuesta = session.post(url, headers=headers, json=payload, timeout=15)
+    respuesta = session.post(
+        f"{BASE_URL}/users",
+        json=payload,
+        headers=HEADERS,
+        timeout=15,
+    )
     assert respuesta.status_code == 201
 
-    body = respuesta.json()
-    user_id = body.get("id")
+    data = respuesta.json()
+    user_id = data.get("id")
     assert user_id is not None
-
-    # Uso del id dentro del flujo del test (demostrativo)
     assert str(user_id).strip() != ""
