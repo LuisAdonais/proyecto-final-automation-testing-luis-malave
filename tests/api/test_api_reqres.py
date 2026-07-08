@@ -36,3 +36,29 @@ def session():
     Reutilizamos una Session de requests (mejor performance y menos repetición).
     """
     return requests.Session()
+
+
+def _skip_si_no_hay_key(headers):
+    """
+    ReqRes exige x-api-key.
+    Si el usuario no configuró REQRES_API_KEY, saltamos el test con un mensaje claro.
+    """
+    if headers is None:
+        pytest.skip("Falta REQRES_API_KEY (variable de entorno) para llamar a ReqRes.")
+
+
+# --- TC_API_01 - Obtener usuario existente --- #
+def test_tc_api_01_get_usuario_existente(session):
+    headers = _headers_reqres()
+    _skip_si_no_hay_key(headers)
+
+    url = f"{BASE_URL}/users/2"
+    respuesta = session.get(url, headers=headers, timeout=15)
+
+    assert respuesta.status_code == 200
+
+    body = respuesta.json()
+    assert "data" in body
+    assert body["data"]["id"] == 2
+    assert "email" in body["data"]
+    assert "first_name" in body["data"]
