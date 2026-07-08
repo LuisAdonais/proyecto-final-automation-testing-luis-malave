@@ -1,48 +1,38 @@
 # pages/cart_page.py
-# Page Object de la pantalla del carrito en SauceDemo.
+# Page Object del carrito de compras.
+
+from selenium.webdriver.common.by import By
+
+from pages.base_page import BasePage
 
 
-class CartPage:
-    """
-    Representa el carrito de compras.
-    Los localizadores estan aqui para que el test no los repita.
-    """
-
-    NOMBRE_PRODUCTO = ".inventory_item_name"
-    ITEMS_CARRITO = ".cart_item"
-    BOTON_REMOVE = "[data-test^='remove-']"
-    BOTON_CHECKOUT = "#checkout"
-
-    def __init__(self, driver):
-        self.driver = driver
+class CartPage(BasePage):
+    """Acciones de la pantalla del carrito."""
 
     def obtener_nombre_producto(self):
-        """
-        Devuelve el nombre del primer producto en el carrito.
-        Si no hay productos, devuelve cadena vacia.
-        """
-        productos = self.driver.find_elements("css selector", self.NOMBRE_PRODUCTO)
+        """Nombre del primer producto del carrito."""
+        productos = self.driver.find_elements(By.CLASS_NAME, "inventory_item_name")
         if not productos:
             return ""
         return productos[0].text
 
     def obtener_productos_en_carrito(self):
-        """Devuelve lista con los nombres de todos los productos del carrito."""
-        productos = self.driver.find_elements("css selector", self.NOMBRE_PRODUCTO)
+        """Lista con todos los nombres del carrito."""
+        self._esperar_visible(By.CLASS_NAME, "cart_list")
+        productos = self.driver.find_elements(By.CLASS_NAME, "inventory_item_name")
         return [producto.text for producto in productos]
 
     def remover_producto(self):
         """Elimina el primer producto visible del carrito."""
-        botones_remove = self.driver.find_elements("css selector", self.BOTON_REMOVE)
-        if botones_remove:
-            botones_remove[0].click()
+        boton = self._esperar_clickeable(By.CSS_SELECTOR, "[data-test^='remove-']")
+        boton.click()
+        self._espera().until(lambda driver: len(driver.find_elements(By.CLASS_NAME, "cart_item")) == 0)
 
     def click_checkout(self):
-        """Hace click en Checkout para avanzar al formulario de datos."""
-        boton = self.driver.find_element("css selector", self.BOTON_CHECKOUT)
-        boton.click()
+        """Avanza al formulario de checkout."""
+        self._hacer_click(By.ID, "checkout")
 
     def carrito_esta_vacio(self):
-        """Indica si el carrito no tiene productos."""
-        items = self.driver.find_elements("css selector", self.ITEMS_CARRITO)
+        """True si no hay productos en el carrito."""
+        items = self.driver.find_elements(By.CLASS_NAME, "cart_item")
         return len(items) == 0

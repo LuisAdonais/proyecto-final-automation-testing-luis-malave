@@ -1,58 +1,32 @@
 # pages/login_page.py
-# Page Object de la pantalla de Login en SauceDemo.
-# Los tests NO deben usar localizadores directos: todo pasa por esta clase.
+# Page Object del login en SauceDemo.
+
+from selenium.webdriver.common.by import By
+
+from pages.base_page import BasePage
 
 
-class LoginPage:
-    """
-    Representa la pagina de login.
-    Guardamos selectores y acciones en un solo lugar (patron POM).
-    """
+class LoginPage(BasePage):
+    """Acciones y localizadores de la pantalla de login."""
 
-    # URL de la aplicacion
     URL = "https://www.saucedemo.com/"
 
-    # Localizadores del login
-    CAMPO_USUARIO = "#user-name"
-    CAMPO_PASSWORD = "#password"
-    BOTON_LOGIN = "#login-button"
-    MENSAJE_ERROR = "[data-test='error']"
-
-    def __init__(self, driver):
-        """Recibimos el navegador (driver) desde el test."""
-        self.driver = driver
-
     def abrir(self):
-        """Abre la pagina de login en el navegador."""
+        """Abre la pagina de login."""
         self.driver.get(self.URL)
+        self._esperar_visible(By.ID, "user-name")
 
     def login(self, usuario, password):
-        """
-        Hace login con usuario y contraseña.
-
-        Parametros:
-            usuario: nombre de usuario
-            password: contraseña
-        """
-        campo_usuario = self.driver.find_element("css selector", self.CAMPO_USUARIO)
-        campo_usuario.clear()
-        campo_usuario.send_keys(usuario)
-
-        campo_password = self.driver.find_element("css selector", self.CAMPO_PASSWORD)
-        campo_password.clear()
-        campo_password.send_keys(password)
-
-        boton = self.driver.find_element("css selector", self.BOTON_LOGIN)
-        boton.click()
+        """Ingresa credenciales y hace click en Login."""
+        self._escribir_texto(By.ID, "user-name", usuario)
+        self._escribir_texto(By.ID, "password", password)
+        self._hacer_click(By.ID, "login-button")
 
     def obtener_mensaje_error(self):
-        """Devuelve el texto del mensaje de error visible en pantalla."""
-        mensaje = self.driver.find_element("css selector", self.MENSAJE_ERROR)
+        """Devuelve el mensaje de error visible."""
+        mensaje = self._esperar_visible(By.CSS_SELECTOR, "[data-test='error']")
         return mensaje.text
 
     def esta_en_login(self):
-        """
-        Indica si seguimos en la pantalla de login.
-        Util para validar login fallido o usuario bloqueado.
-        """
+        """Indica si seguimos en la pantalla de login."""
         return self.driver.current_url == self.URL
