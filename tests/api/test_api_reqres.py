@@ -95,3 +95,18 @@ def test_tc_api_03_delete_usuario(session):
 
     # 204 = No Content: normalmente viene body vacío.
     assert respuesta.text == ""
+
+
+# --- TC_API_04 - Usuario no encontrado (negativo) --- #
+def test_tc_api_04_get_usuario_no_encontrado(session):
+    headers = _headers_reqres()
+    _skip_si_no_hay_key(headers)
+
+    url = f"{BASE_URL}/users/23"
+    respuesta = session.get(url, headers=headers, timeout=15)
+
+    assert respuesta.status_code == 404
+
+    # ReqRes suele responder {} sin campo data cuando no existe
+    body = respuesta.json()
+    assert body == {} or "data" not in body
