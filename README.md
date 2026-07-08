@@ -1,9 +1,32 @@
 # Proyecto Final — Automation Testing
 
-Framework de automatización de pruebas **UI** (SauceDemo) y **API** (ReqRes) desarrollado con **Python**, **Pytest**, **Selenium** y **Requests**.
-
+**Curso:** Talento Tech  
 **Autor:** Luis Malave  
 **Repositorio:** [proyecto-final-automation-testing-luis-malave](https://github.com/LuisAdonais/proyecto-final-automation-testing-luis-malave)
+
+---
+
+## Propósito del proyecto
+
+Framework de automatización de pruebas **UI** (SauceDemo) y **API** (ReqRes) desarrollado con **Python**, **Pytest**, **Selenium** y **Requests**.
+
+El objetivo es demostrar un framework completo y mantenible que:
+
+- Automatice flujos reales de una aplicación web con **Page Object Model**
+- Valide endpoints REST con distintos métodos HTTP
+- Genere reportes visuales y logs para facilitar la depuración
+- Sea fácil de extender con nuevos casos de prueba
+
+---
+
+## Tecnologías
+
+- **Python** — lenguaje principal
+- **Pytest** + **pytest-html** — ejecución y reportes
+- **Selenium WebDriver** + WebDriverWait — pruebas UI
+- **Requests** — pruebas API
+- **Page Object Model** — organización del código
+- **Git / GitHub** — control de versiones y CI/CD
 
 ---
 
@@ -97,7 +120,27 @@ También puedes usar el script:
 | Log de ejecución | `reports/ejecucion.log` |
 | Screenshots (fallos UI) | `screenshots/failure_*.png` |
 
-Los screenshots se incrustan automáticamente en el reporte HTML cuando falla un test UI.
+### Cómo interpretar los reportes
+
+**Reporte HTML (`reports/reporte.html`)**
+
+1. Abrir el archivo en el navegador después de ejecutar `pytest`.
+2. Revisar el resumen superior: cantidad de tests **Passed**, **Failed** y **Skipped**.
+3. En la tabla de resultados, cada fila muestra:
+   - **Nombre del test**
+   - **Estado** (verde = pasó, rojo = falló)
+   - **Duración** en segundos
+4. Si un test UI falló, el reporte incluye la **captura de pantalla incrustada** al final de la fila del test.
+
+**Log de ejecución (`reports/ejecucion.log`)**
+
+- Registra inicio/fin de cada test, apertura/cierre del navegador y códigos HTTP de las pruebas API.
+- Útil para depurar: buscar el nombre del test que falló y revisar los mensajes anteriores al error.
+
+**Screenshots (`screenshots/`)**
+
+- Se generan solo cuando falla un test UI.
+- Nombre descriptivo: `failure_{nombre_test}_{fecha_hora}.png`
 
 ---
 
@@ -128,12 +171,23 @@ git push origin main
 
 ## CI/CD (GitHub Actions)
 
-El workflow `.github/workflows/tests.yml` ejecuta en cada push/PR a `main`:
+El workflow **Automation Testing CI** (`.github/workflows/tests.yml`) se ejecuta en:
 
-- **api-tests** — pruebas API con secret `REQRES_API_KEY`
-- **ui-tests** — pruebas UI con Firefox headless
+- Push a `main`
+- Pull request hacia `main`
+- Ejecución manual (`workflow_dispatch`)
+
+Pasos que realiza:
+
+1. Checkout del código
+2. Configuración de Python 3.12 y Firefox
+3. Instalación de dependencias
+4. Ejecución de `pytest` (suite completa UI + API)
+5. Subida de `reports/` y `screenshots/` como artefacto **`reportes-automation-testing`**
 
 Configurar el secret en: **Settings → Secrets and variables → Actions → New repository secret**
+
+Nombre del secret: `REQRES_API_KEY`
 
 ---
 
@@ -160,13 +214,3 @@ Configurar el secret en: **Settings → Secrets and variables → Actions → Ne
 | TC_API_03 | DELETE usuario |
 | TC_API_04 | GET usuario no encontrado (negativo) |
 | TC_API_05 | Encadenamiento demostrativo |
-
----
-
-## Tecnologías
-
-- **Selenium WebDriver** + WebDriverWait
-- **Pytest** + pytest-html
-- **Requests**
-- **Page Object Model**
-- **Git / GitHub**
