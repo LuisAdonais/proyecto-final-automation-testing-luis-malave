@@ -1,6 +1,8 @@
 # pages/inventory_page.py
 # Page Object del catalogo de productos (inventory) en SauceDemo.
 
+from selenium.webdriver.support.ui import Select
+
 
 class InventoryPage:
     """
@@ -63,10 +65,10 @@ class InventoryPage:
     def seleccionar_ordenamiento(self, valor):
         """
         Cambia el orden del catalogo.
-        Valores comunes: 'az', 'za', 'lohi', 'hilo'
+        Valores comunes: 'az', 'za', 'lohi' (precio menor a mayor), 'hilo'
         """
-        select = self.driver.find_element("css selector", self.SELECT_ORDENAMIENTO)
-        select.send_keys(valor)
+        elemento_select = self.driver.find_element("css selector", self.SELECT_ORDENAMIENTO)
+        Select(elemento_select).select_by_value(valor)
 
     def obtener_nombres_productos(self):
         """Devuelve lista con los nombres visibles de productos."""
