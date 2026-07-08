@@ -1,7 +1,6 @@
 # tests/api/test_api_reqres.py
 # Pruebas de API usando Requests contra ReqRes.
 # Documentacion oficial: https://reqres.in/docs
-# Todas las requests requieren el header x-api-key.
 
 import os
 from pathlib import Path
@@ -10,16 +9,17 @@ import pytest
 import requests
 from dotenv import load_dotenv
 
+from utils.logger import log_status_code_api
+
+# Marker del epic: todas las pruebas de este archivo son API
+pytestmark = pytest.mark.api
+
 # Carga variables desde .env local (archivo ignorado por git)
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-# Base URL pedida por el ticket
 BASE_URL = "https://reqres.in/api"
-
-# Leemos la API key desde entorno o .env (NO hardcodear en GitHub)
 API_KEY = os.getenv("REQRES_API_KEY")
 
-# Headers comunes para ReqRes
 HEADERS = {
     "x-api-key": API_KEY,
     "Content-Type": "application/json",
@@ -28,12 +28,7 @@ HEADERS = {
 
 @pytest.fixture(autouse=True)
 def validar_api_key_configurada():
-    """
-    Control temprano: si falta la key, el error es claro para un junior.
-    Opciones seguras:
-    - Crear archivo .env (copiar desde .env.example)
-    - O en PowerShell: $env:REQRES_API_KEY="tu_api_key_aqui"
-    """
+    """Falla con mensaje claro si falta REQRES_API_KEY."""
     if API_KEY is None:
         raise ValueError("Falta configurar la variable de entorno REQRES_API_KEY")
 
@@ -46,7 +41,9 @@ def session():
 
 # --- TC_API_01 - Obtener usuario existente --- #
 def test_tc_api_01_get_usuario_existente(session):
-    respuesta = session.get(f"{BASE_URL}/users/2", headers=HEADERS, timeout=15)
+    url = f"{BASE_URL}/users/2"
+    respuesta = session.get(url, headers=HEADERS, timeout=15)
+    log_status_code_api("test_tc_api_01_get_usuario_existente", "GET", url, respuesta.status_code)
 
     assert respuesta.status_code == 200
 
@@ -59,14 +56,11 @@ def test_tc_api_01_get_usuario_existente(session):
 
 # --- TC_API_02 - Crear usuario (POST) --- #
 def test_tc_api_02_post_crear_usuario(session):
+    url = f"{BASE_URL}/users"
     payload = {"name": "luis", "job": "qa automation"}
 
-    respuesta = session.post(
-        f"{BASE_URL}/users",
-        json=payload,
-        headers=HEADERS,
-        timeout=15,
-    )
+    respuesta = session.post(url, json=payload, headers=HEADERS, timeout=15)
+    log_status_code_api("test_tc_api_02_post_crear_usuario", "POST", url, respuesta.status_code)
 
     assert respuesta.status_code == 201
 
@@ -79,7 +73,9 @@ def test_tc_api_02_post_crear_usuario(session):
 
 # --- TC_API_03 - Eliminar usuario (DELETE) --- #
 def test_tc_api_03_delete_usuario(session):
-    respuesta = session.delete(f"{BASE_URL}/users/2", headers=HEADERS, timeout=15)
+    url = f"{BASE_URL}/users/2"
+    respuesta = session.delete(url, headers=HEADERS, timeout=15)
+    log_status_code_api("test_tc_api_03_delete_usuario", "DELETE", url, respuesta.status_code)
 
     assert respuesta.status_code == 204
     assert respuesta.text == ""
@@ -87,7 +83,9 @@ def test_tc_api_03_delete_usuario(session):
 
 # --- TC_API_04 - Usuario no encontrado (negativo) --- #
 def test_tc_api_04_get_usuario_no_encontrado(session):
-    respuesta = session.get(f"{BASE_URL}/users/23", headers=HEADERS, timeout=15)
+    url = f"{BASE_URL}/users/23"
+    respuesta = session.get(url, headers=HEADERS, timeout=15)
+    log_status_code_api("test_tc_api_04_get_usuario_no_encontrado", "GET", url, respuesta.status_code)
 
     assert respuesta.status_code == 404
 
@@ -98,19 +96,20 @@ def test_tc_api_04_get_usuario_no_encontrado(session):
 # --- TC_API_05 - Encadenamiento demostrativo (opcional) --- #
 def test_tc_api_05_encadenamiento_crear_usuario_y_validar_id(session):
     """
-    Importante (junior):
     ReqRes NO persiste realmente los usuarios creados.
-    Este encadenamiento es demostrativo: validamos que viene un 'id'
-    y lo usamos como dato dentro del mismo test.
+    Encadenamiento demostrativo: validamos que viene un id.
     """
+    url = f"{BASE_URL}/users"
     payload = {"name": "luis", "job": "qa automation"}
 
-    respuesta = session.post(
-        f"{BASE_URL}/users",
-        json=payload,
-        headers=HEADERS,
-        timeout=15,
+    respuesta = session.post(url, json=payload, headers=HEADERS, timeout=15)
+    log_status_code_api(
+        "test_tc_api_05_encadenamiento_crear_usuario_y_validar_id",
+        "POST",
+        url,
+        respuesta.status_code,
     )
+
     assert respuesta.status_code == 201
 
     data = respuesta.json()

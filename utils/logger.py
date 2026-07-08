@@ -79,3 +79,10 @@ def log_ruta_screenshot(ruta):
 def log_ejecucion_api(nombre_test, metodo, url):
     """Registra cuando un test de API se ejecuta."""
     logger.info(f"Ejecucion API en '{nombre_test}' | {metodo} {url}")
+
+
+def log_status_code_api(nombre_test, metodo, url, status_code):
+    """Registra el status code HTTP recibido en una prueba API."""
+    logger.info(
+        f"API '{nombre_test}' | {metodo} {url} | status_code={status_code}"
+    )

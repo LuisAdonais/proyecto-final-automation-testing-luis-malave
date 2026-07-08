@@ -10,6 +10,9 @@ from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
 from utils.helpers import cargar_json
 
+# Marker del epic: todas las pruebas de este archivo son UI
+pytestmark = pytest.mark.ui
+
 # --- Constantes y datos externos ---
 DATOS_LOGIN = cargar_json("usuarios.json")
 USUARIO_VALIDO = "standard_user"
