@@ -80,3 +80,23 @@ def test_tc_ui_03_filtrar_productos_por_precio(driver):
 
     precios = [_precio_a_numero(precio) for precio in inventario.obtener_precios_productos()]
     assert precios == sorted(precios)
+
+
+PRODUCTO_BACKPACK_ID = "sauce-labs-backpack"
+PRODUCTO_BACKPACK_NOMBRE = "Sauce Labs Backpack"
+
+
+# --- TC_UI_04: Anadir producto al carrito ---
+def test_tc_ui_04_agregar_producto_al_carrito(driver):
+    """Valida agregar un producto y verlo en el carrito."""
+    inventario = InventoryPage(driver)
+    carrito = CartPage(driver)
+
+    _login_exitoso(driver)
+    inventario.agregar_producto_al_carrito(PRODUCTO_BACKPACK_ID)
+
+    assert inventario.obtener_cantidad_carrito() == 1
+
+    inventario.ir_al_carrito()
+    assert "cart" in driver.current_url
+    assert PRODUCTO_BACKPACK_NOMBRE in carrito.obtener_productos_en_carrito()
