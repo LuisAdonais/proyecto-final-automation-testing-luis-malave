@@ -81,3 +81,17 @@ def test_tc_api_02_post_crear_usuario(session):
     assert body["job"] == "qa automation"
     assert "id" in body
     assert "createdAt" in body
+
+
+# --- TC_API_03 - Eliminar usuario (DELETE) --- #
+def test_tc_api_03_delete_usuario(session):
+    headers = _headers_reqres()
+    _skip_si_no_hay_key(headers)
+
+    url = f"{BASE_URL}/users/2"
+    respuesta = session.delete(url, headers=headers, timeout=15)
+
+    assert respuesta.status_code == 204
+
+    # 204 = No Content: normalmente viene body vacío.
+    assert respuesta.text == ""
