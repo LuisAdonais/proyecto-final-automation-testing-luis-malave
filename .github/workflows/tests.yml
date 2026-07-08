@@ -28,6 +28,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Validar secret de ReqRes
+        run: |
+          if [ -z "${{ secrets.REQRES_API_KEY }}" ]; then
+            echo "ERROR: Falta configurar REQRES_API_KEY en Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+
       - name: Ejecutar pruebas API
         env:
           REQRES_API_KEY: ${{ secrets.REQRES_API_KEY }}
@@ -55,4 +62,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: Ejecutar pruebas UI
+        env:
+          GITHUB_ACTIONS: "true"
         run: pytest tests/ui -v

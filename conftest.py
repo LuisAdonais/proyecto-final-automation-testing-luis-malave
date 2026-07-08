@@ -4,6 +4,7 @@
 
 from datetime import datetime
 from pathlib import Path
+import os
 
 import pytest
 from selenium import webdriver
@@ -48,10 +49,15 @@ def driver():
 
     # Configuracion de Firefox
     opciones = Options()
-    # opciones.add_argument("--headless")  # descomentar para correr sin ventana visible
+
+    # En GitHub Actions no hay pantalla visible: usamos headless
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        opciones.add_argument("-headless")
 
     navegador = webdriver.Firefox(options=opciones)
-    navegador.maximize_window()
+
+    if os.getenv("GITHUB_ACTIONS") != "true":
+        navegador.maximize_window()
 
     # Entregamos el driver al test
     yield navegador
