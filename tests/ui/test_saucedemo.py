@@ -119,3 +119,26 @@ def test_tc_ui_05_remover_producto_del_carrito(driver):
 
     assert carrito.carrito_esta_vacio()
     assert carrito.obtener_productos_en_carrito() == []
+
+
+DATOS_CHECKOUT = cargar_json("checkout_data.json")
+
+
+# --- TC_UI_06: Checkout completo exitoso ---
+def test_tc_ui_06_checkout_completo_exitoso(driver):
+    """Flujo E2E: login -> carrito -> checkout -> confirmacion."""
+    inventario = InventoryPage(driver)
+    carrito = CartPage(driver)
+    checkout = CheckoutPage(driver)
+    datos = DATOS_CHECKOUT[0]
+
+    _login_exitoso(driver)
+    inventario.agregar_producto_al_carrito(PRODUCTO_BACKPACK_ID)
+    inventario.ir_al_carrito()
+    carrito.click_checkout()
+
+    checkout.completar_datos(datos["nombre"], datos["apellido"], datos["codigo_postal"])
+    checkout.continuar()
+    checkout.finalizar_compra()
+
+    assert "Thank you for your order!" in checkout.obtener_mensaje_confirmacion()
