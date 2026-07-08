@@ -5,7 +5,7 @@ name: Ejecutar pruebas automatizadas
 
 on:
   push:
-    branches: [main, feature/project-structure]
+    branches: [main]
   pull_request:
     branches: [main]
 
