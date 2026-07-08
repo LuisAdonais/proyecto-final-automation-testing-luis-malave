@@ -1,12 +1,14 @@
 # conftest.py
 # Configuracion global de pytest.
-# Aqui centralizamos: navegador, carpetas, capturas en fallos y logs.
+# Aqui centralizamos: navegador, carpetas, capturas en fallos, logs y reporte HTML.
 
+import base64
+import os
 from datetime import datetime
 from pathlib import Path
-import os
 
 import pytest
+from pytest_html import extras
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
@@ -19,7 +21,6 @@ from utils.logger import (
     log_inicio_test,
     log_ruta_screenshot,
 )
-
 
 # Rutas de carpetas del proyecto
 CARPETA_REPORTES = Path("reports")
@@ -47,7 +48,6 @@ def driver():
     """
     log_apertura_navegador()
 
-    # Configuracion de Firefox
     opciones = Options()
 
     # En GitHub Actions no hay pantalla visible: usamos headless
@@ -59,10 +59,8 @@ def driver():
     if os.getenv("GITHUB_ACTIONS") != "true":
         navegador.maximize_window()
 
-    # Entregamos el driver al test
     yield navegador
 
-    # Limpieza: cerramos el navegador despues del test
     navegador.quit()
     log_cierre_navegador()
 
@@ -74,7 +72,6 @@ def pytest_runtest_setup(item):
     """
     log_inicio_test(item.name)
 
-    # Si el test es de API, registramos que se va a ejecutar una prueba API
     if item.get_closest_marker("api"):
         log_ejecucion_api(item.name, "SETUP", "test de API detectado")
 
@@ -82,25 +79,41 @@ def pytest_runtest_setup(item):
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """
-    Hook de pytest: se ejecuta despues de cada fase del test (setup/call/teardown).
-    Si el test falla, guardamos screenshot y lo registramos en el log.
+    Hook de pytest: si un test UI falla:
+    - guarda screenshot en screenshots/
+    - registra la ruta en el log
+    - incrusta la imagen en reports/reporte.html
     """
-    # Ejecutamos el test y obtenemos el resultado
     resultado = yield
     reporte = resultado.get_result()
+    reporte.extras = getattr(reporte, "extras", [])
 
-    # Solo actuamos cuando falla la fase principal del test (call)
     if reporte.when == "call" and reporte.failed:
         mensaje_error = str(reporte.longrepr)
         log_fallo(item.name, mensaje_error)
 
-        # Buscamos el fixture driver (solo existe en tests UI)
         driver = item.funcargs.get("driver")
         if driver is not None:
-            # Nombre descriptivo: nombre_test + fecha/hora
             fecha_hora = datetime.now().strftime("%Y%m%d_%H%M%S")
-            nombre_archivo = f"{item.name}_{fecha_hora}.png"
+            nombre_archivo = f"failure_{item.name}_{fecha_hora}.png"
             ruta_screenshot = CARPETA_SCREENSHOTS / nombre_archivo
 
             driver.save_screenshot(str(ruta_screenshot))
             log_ruta_screenshot(ruta_screenshot)
+
+            # Incrustamos la captura en el reporte HTML (pytest-html)
+            with open(ruta_screenshot, "rb") as imagen:
+                imagen_base64 = base64.b64encode(imagen.read()).decode("ascii")
+
+            reporte.extras.append(
+                extras.html(
+                    f"<p><strong>Screenshot de fallo:</strong> {ruta_screenshot}</p>"
+                )
+            )
+            reporte.extras.append(
+                extras.image(
+                    imagen_base64,
+                    mime_type="image/png",
+                    extension="png",
+                )
+            )
