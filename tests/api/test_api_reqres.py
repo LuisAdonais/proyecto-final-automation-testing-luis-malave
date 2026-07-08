@@ -110,3 +110,28 @@ def test_tc_api_04_get_usuario_no_encontrado(session):
     # ReqRes suele responder {} sin campo data cuando no existe
     body = respuesta.json()
     assert body == {} or "data" not in body
+
+
+# --- TC_API_05 - Encadenamiento demostrativo (opcional) --- #
+def test_tc_api_05_encadenamiento_crear_usuario_y_validar_id(session):
+    """
+    Importante (junior):
+    ReqRes NO persiste realmente los usuarios creados.
+    Este encadenamiento es demostrativo: validamos que viene un 'id' y lo usamos
+    como dato dentro del mismo test.
+    """
+    headers = _headers_reqres()
+    _skip_si_no_hay_key(headers)
+
+    url = f"{BASE_URL}/users"
+    payload = {"name": "luis", "job": "qa automation"}
+
+    respuesta = session.post(url, headers=headers, json=payload, timeout=15)
+    assert respuesta.status_code == 201
+
+    body = respuesta.json()
+    user_id = body.get("id")
+    assert user_id is not None
+
+    # Uso del id dentro del flujo del test (demostrativo)
+    assert str(user_id).strip() != ""
