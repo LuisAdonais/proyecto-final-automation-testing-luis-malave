@@ -100,3 +100,22 @@ def test_tc_ui_04_agregar_producto_al_carrito(driver):
     inventario.ir_al_carrito()
     assert "cart" in driver.current_url
     assert PRODUCTO_BACKPACK_NOMBRE in carrito.obtener_productos_en_carrito()
+
+
+# --- TC_UI_05: Remover producto del carrito ---
+def test_tc_ui_05_remover_producto_del_carrito(driver):
+    """
+    Test independiente: prepara su propio carrito y luego lo vacia.
+    No depende de otros tests.
+    """
+    inventario = InventoryPage(driver)
+    carrito = CartPage(driver)
+
+    _login_exitoso(driver)
+    inventario.agregar_producto_al_carrito(PRODUCTO_BACKPACK_ID)
+    inventario.ir_al_carrito()
+
+    carrito.remover_producto()
+
+    assert carrito.carrito_esta_vacio()
+    assert carrito.obtener_productos_en_carrito() == []
